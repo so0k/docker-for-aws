@@ -17,7 +17,17 @@ aws cloudformation create-stack \
                ParameterKey=KeyName,ParameterValue=so0k-key \
   --capabilities CAPABILITY_IAM
 ```
-Note: If you want to demo leader election, use more than 1 master!
+**Note**: If you want to demo leader election, use more than 1 master!
+
+**Note**: AWS Access key needs to be able to:
+
+1. Access the template from S3
+2. CloudWatch access
+3. IAM access (to create roles and policies, ...)
+4. EC2 access (to create scaling groups, load balancers, ...)
+5. DynamoDB access
+6. SQS access
+7. CloudFormation access
 
 Monitor progress:
 ```
