@@ -46,14 +46,19 @@ aws cloudformation delete-stack --stack-name dockerforaws
 
 When completed (10-15min), fetch cloudformation template outputs
 ```
-aws cloudformation describe-stacks --stack-name=dockerforaws --query 'Stacks[].Outputs
-export DEFAULT_DNS_TARGET=`aws cloudformation describe-stacks --stack-name=dockerforaws --query 'Stacks[].Outputs[?OutputKey==\`DefaultDNSTarget\`].OutputValue' --output=text`
+aws cloudformation describe-stacks --stack-name=dockerforaws --query 'Stacks[].Outputs'
+export DEFAULT_DNS_TARGET=`aws cloudformation describe-stacks --stack-name=dockerforaws \ 
+  --query 'Stacks[].Outputs[?OutputKey==\`DefaultDNSTarget\`].OutputValue' --output=text`
 ```
 Notice there are 2 outputs, the endpoints for ELB and SSH
 
 Set up local port to tunnel to master:
 ```
-ssh -NL localhost:2374:/var/run/docker.sock  docker@$DEFAULT_DNS_TARGET &
+export SSH_ELB=`aws cloudformation describe-stacks --stack-name=dockerforaws \ 
+  --query 'Stacks[].Outputs[?OutputKey==\`SSH\`].OutputValue' --output=text | \
+  awk -F@ '/docker/{print $2}'`
+ssh-keyscan -t rsa $SSH_ELB >> ~/.ssh/known_hosts
+ssh -NL localhost:2374:/var/run/docker.sock  docker@$SSH_ELB &
 export DOCKER_HOST=localhost:2374
 docker node ls
 docker info
