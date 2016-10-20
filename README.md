@@ -2,6 +2,8 @@
 
 ## Cloudformation
 
+Create Stack from CLI:
+
 ```
 export AWS_DEFAULT_PROFILE="personal"
 export AWS_DEFAULT_REGION=ap-southeast-1
@@ -17,11 +19,27 @@ aws cloudformation create-stack \
 ```
 Note: If you want to demo leader election, use more than 1 master!
 
-When completed (10-15min), fetch outputs
+Monitor progress:
 ```
-#aws cloudformation describe-stacks --stack-name=dockerforaws | jq -r '.Stacks[0].Outputs[] | .OutputValue'
+while true; do aws cloudformation describe-stacks --stack-name dockerforaws --query "Stacks[].StackStatus" --output=text; sleep 1; done
+```
+
+Troubleshoot:
+```
+aws cloudformation describe-stack-events --stack-name dockerforaws --query 'StackEvents[].ResourceStatusReason'
+```
+
+If required to re-create, remove first:
+```
+aws cloudformation delete-stack --stack-name dockerforaws
+```
+
+When completed (10-15min), fetch cloudformation template outputs
+```
+aws cloudformation describe-stacks --stack-name=dockerforaws --query 'Stacks[].Outputs
 export DEFAULT_DNS_TARGET=`aws cloudformation describe-stacks --stack-name=dockerforaws --query 'Stacks[].Outputs[?OutputKey==\`DefaultDNSTarget\`].OutputValue' --output=text`
 ```
+Notice there are 2 outputs, the endpoints for ELB and SSH
 
 Set up local port to tunnel to master:
 ```
@@ -61,17 +79,7 @@ When AWS replaces an instance, the instance can learn of its impending doom and 
 
 ### Demo setup:
 
-1 way to run visualizer:
-```
-docker run -it -d -p 3000:3000 -e HOST=$DEFAULT_DNS_TARGET -e PORT=3000 -v /var/run/docker.sock:/var/run/docker.sock manomarks/visualizer
-```
-note: open port on ELB manually, as this is  if not deployed as a service..
-```
-aws elb create-load-balancer-listeners --load-balancer-name dockerforaws-ELB --listeners "Protocol=HTTP,LoadBalancerPort=3000,InstanceProtocol=HTTP,InstancePort=3000"
-```
-
-A better way is to run the visualizer as a service:
-
+Run the visualizer as a service:
 ```
 docker service create \
   --name visualiser \
@@ -82,8 +90,6 @@ docker service create \
   -e HOST=$DEFAULT_DNS_TARGET \
   manomarks/visualizer
 ```
-Note: in this case, we do not need to re-add the port on the ELB each time
-
 
 ### Exploring Services
 
@@ -147,10 +153,6 @@ docker service create --name myservice --constraint 'node.labels.disk == ssd' my
 Simple Sample app
 ```
 docker service create --name city --replicas 5 --publish "8081:80" so0k/randomcity:1.0
-```
-HACK! if you are not running visualizer as a service, re-add the port for visualizer
-```
-aws elb create-load-balancer-listeners --load-balancer-name dockerforaws-ELB --listeners "Protocol=HTTP,LoadBalancerPort=3000,InstanceProtocol=HTTP,InstancePort=3000"
 ```
 
 Demonstrate load balancing
