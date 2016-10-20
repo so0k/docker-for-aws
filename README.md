@@ -97,13 +97,23 @@ When AWS replaces an instance, the instance can learn of its impending doom and 
 Run the visualizer as a service:
 ```
 docker service create \
-  --name visualiser \
+  --name visualizer \
   --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false \
   --constraint node.role==manager \
   -p 3000:3000 \
   -e PORT=3000 \
   -e HOST=$DEFAULT_DNS_TARGET \
   manomarks/visualizer
+```
+
+Wait until it starts running
+```
+watch docker service ps visualizer
+```
+
+Open in browser
+```
+open http://$DEFAULT_DNS_TARGET:3000
 ```
 
 ### Exploring Services
