@@ -34,6 +34,11 @@ Monitor progress:
 while true; do aws cloudformation describe-stacks --stack-name dockerforaws --query "Stacks[].StackStatus" --output=text; sleep 1; done
 ```
 
+or use
+```
+aws cloudformation wait stack-create-complete --stack-name dockerforaws
+```
+
 Troubleshoot:
 ```
 aws cloudformation describe-stack-events --stack-name dockerforaws --query 'StackEvents[].ResourceStatusReason'
@@ -105,6 +110,8 @@ docker service create \
   -e HOST=$DEFAULT_DNS_TARGET \
   manomarks/visualizer
 ```
+
+[Alternative visualizer](https://github.com/bargenson/docker-swarm-visualizer)
 
 Wait until it starts running
 ```
